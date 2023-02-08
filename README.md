@@ -19,12 +19,12 @@ Java Topology Suite:
 - Read a specific record from a shapefile, including metadata:
 ```
     // User clicks on a polyline on the map, returning the unique index into the geometry collection.
-    final int selectedRecordIndex = 4;
+    int selectedRecordIndex = getSelectedRecordIndex();
 
     // Select the specific geometry from the record index.
     Geometry geometry = geometryCollection.getGeometryN(selectedRecordIndex);
 
-    // Get metadata by reading the record from the .dbf file.
+    // First, we need to read the header info from the .dbf file.
     InputStream headerStream = getDbfInputStream(); // Enter your own implementation here!
     DBASEReader reader = new DBASEReader(headerStream);
     DBASEReader.DBASEHeaderInfo header = reader.readHeader();
