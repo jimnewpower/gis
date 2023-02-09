@@ -748,6 +748,14 @@ public class DBASEReader {
         return byteBuffer;
     }
 
+    /**
+     * Reads the entire .dbf file into memory as a DBASETableData object. NOT Recommended to use
+     * due to the possibility of OutOfMemoryError for larger .dbf files.
+     *
+     * @param inputStream the .dbf input stream.
+     * @return new instance of a DBASETableData, populated with the DBASE data.
+     * @throws IOException
+     */
     public DBASETableData read(InputStream inputStream) throws IOException {
         ByteBuffer byteBuffer = createByteBuffer(inputStream);
 

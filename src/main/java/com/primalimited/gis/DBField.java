@@ -2,11 +2,21 @@ package com.primalimited.gis;
 
 import java.util.Objects;
 
+/**
+ * Data representing one column from one row in the .dbf file.
+ */
 public class DBField {
     private final String name;
     private final String type;
     private final Object value;
 
+    /**
+     * Constructor.
+     *
+     * @param name the column name.
+     * @param type the data type.
+     * @param value the column value.
+     */
     DBField(String name, String type, Object value) {
         this.name = name;
         this.type = type;

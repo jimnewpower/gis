@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Holder for all data in the .dbf file. Not recommended to use this as it could definitely cause
+ * an OutOfMemory exception for larger shapefile .dbf files.
+ */
 public class DBASETableData {
     public static final double DVAL_DOUBLE = 3.4E+38;
 

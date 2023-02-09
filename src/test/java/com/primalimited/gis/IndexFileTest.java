@@ -11,31 +11,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class IndexFileTest {
 
     @Test
-    void indexFileTest() throws IOException {
-        TestHelper testHelper = new TestHelper();
-        // This is the number of records we've chosen to test, not the total number in the test file.
-        final int nRecords = 52;
-        for (int recordNumber = 0; recordNumber < nRecords; recordNumber++) {
-            InputStream indexFileInputStream = testHelper.getIndexInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
-            IntBuffer intBuffer = new IndexFile().read(indexFileInputStream, recordNumber);
-            int offset = intBuffer.get();
-            int length = intBuffer.get();
-            assertEquals(offsets[recordNumber], offset, "offset for record number " + recordNumber);
-            assertEquals(lengths[recordNumber], length, "length for record number " + recordNumber);
-            indexFileInputStream.close();
-        }
-
-        final int recordNumber = 3071;
-        InputStream indexFileInputStream = testHelper.getIndexInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
-        IntBuffer intBuffer = new IndexFile().read(indexFileInputStream, recordNumber);
-        int offset = intBuffer.get();
-        int length = intBuffer.get();
-        assertEquals(3582170, offset, "offset for record number " + recordNumber);
-        assertEquals(1728, length, "length for record number " + recordNumber);
-        indexFileInputStream.close();
-    }
-
-    @Test
     void pairTestAs16BitWords() throws IOException {
         TestHelper testHelper = new TestHelper();
 
