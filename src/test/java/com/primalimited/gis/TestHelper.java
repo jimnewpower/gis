@@ -3,7 +3,7 @@ package com.primalimited.gis;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class TestHelper {
+class TestHelper {
     static String LINE_SHAPEFILE_BASE_NAME = "WBDLine";
     static String CITIES_SHAPEFILE_BASE_NAME = "cities";
     static String COLORADO_SHAPEFILE_BASE_NAME = "co";
