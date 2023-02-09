@@ -32,19 +32,18 @@ An optional project file:
 - Read a specific record from a shapefile, including metadata:
 ```
     // User clicks on a polyline on the map, returning the unique index into the geometry collection.
-    int selectedRecordIndex = getSelectedRecordIndex();
+    Geometry geometry = getClickedData(); // Enter your own implementation here!
 
-    // Select the specific geometry from the record index.
-    Geometry geometry = geometryCollection.getGeometryN(selectedRecordIndex);
+    // User data should have been set during read.
+    UserData userData = new UserData(geometry.getUserData());
 
     // Now read the record from the .dbf file.
     InputStream dbfStream = getDbfInputStream(); // Enter your own implementation here!
     DBASEReader reader = new DBASEReader();
-    List<DBField> fields = reader
-        .readRecord(
-            dbfStream, 
-            selectedRecordIndex
-        );
+    List<DBField> fields = reader.readRecord(
+        dbfStream, 
+        userData.toInt() // record index
+    );
 
     dbfStream.close();
 ```
