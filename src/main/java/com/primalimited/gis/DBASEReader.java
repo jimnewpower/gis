@@ -341,7 +341,14 @@ public class DBASEReader {
         return(number);
     }
 
-    public String[] readColumnNames(InputStream inputStream) throws IOException, ShapefileException {
+    /**
+     * Get column names from the .dbf file; useful for displaying shapefile metadata.
+     *
+     * @param inputStream the .dbf input stream
+     * @return array of column name strings
+     * @throws IOException
+     */
+    public String[] readColumnNames(InputStream inputStream) throws IOException {
         ByteBuffer byteBuffer = createByteBuffer(inputStream);
 
         // process the file header
@@ -403,29 +410,12 @@ public class DBASEReader {
     }
 
     public Object[] readColumn(InputStream inputStream, String columnName) throws Exception {
-        if (DEBUG_COARSE)
-            System.out.println("readColumn() columnName="+columnName);
+        ByteBuffer byteBuffer = createByteBuffer(inputStream);
 
         // process the file header
-        inputStream.mark(DBASE_HEADER_LENGTH_BYTES * 100);
-        DBASEHeaderInfo headerInfo = readHeader(inputStream);
+        DBASEHeaderInfo headerInfo = readHeader(byteBuffer);
         if (headerInfo.nRecords <= 0)
             return(null);
-        inputStream.reset();
-
-        // Allocate byte buffer to read column names
-        byte[] bytes = inputStream.readAllBytes();
-        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-
-        /* make sure we have proper byte order */
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        /* make sure we are positioned at the start of the file */
-        byteBuffer.rewind();
-
-        /* make sure we have proper byte order */
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        /* make sure we are positioned at the start of the file */
-        byteBuffer.rewind();
 
         if (debug())
             System.out.println("nRecords:"+headerInfo.nRecords);
@@ -435,6 +425,7 @@ public class DBASEReader {
             System.out.println("nFields:"+nFields);
         if (nFields <= 0)
             return(null);
+
         String[] fieldNames = new String[nFields];
         char[] fieldTypes = new char[nFields];
         int[] fieldLengths = new int[nFields];
@@ -523,11 +514,6 @@ public class DBASEReader {
 
             // read deleted byte for this record
             /* byte deletedByte = */ byteBuffer.get();
-//    char deletedChar = (char)deletedByte;
-//      if (DEBUG_FINE)
-//        System.out.println("deletedChar:'"+deletedChar+"'");
-//      if (deletedChar == '*' || deletedChar != ' ')
-//        continue;
 
             int position = byteBuffer.position();
             for (int field = 1; field <= targetFieldIndex; field++) {
@@ -656,12 +642,22 @@ public class DBASEReader {
         return String.class;
     }
 
+    /**
+     * Read a record from the .dbf file; useful for e.g. user clicks on shape feature and wants to see the
+     * metadata associated with that record.
+     *
+     * @param stream the input stream.
+     * @param headerInfo the .dbf header info.
+     * @param record the record index.
+     * @return list of db fields.
+     * @throws IOException
+     */
     public List<DBField> readRecord(InputStream stream, DBASEHeaderInfo headerInfo, int record) throws IOException {
         ByteBuffer byteBuffer = createByteBuffer(stream);
 
         int nFields = (headerInfo.headerSize / DBASE_HEADER_LENGTH_BYTES) - 1;
         if (nFields <= 0)
-            return(null);
+            return Collections.emptyList();
 
         String[] fieldNames = new String[nFields];
         char[] fieldTypes = new char[nFields];
@@ -777,8 +773,6 @@ public class DBASEReader {
              * Read the Field Descriptor Array (starting at byte 32)
              */
             int initialPosition = (field+1) * DBASE_HEADER_LENGTH_BYTES;
-//      if (DEBUG_FINE)
-//        System.out.println("byteBuffer position:"+initialPosition);
             byteBuffer.position(initialPosition);
             // field name (11 bytes)--convert bytes to unicode chars
             char[] uniChars = new char[FIELD_NAME_LENGTH];
@@ -845,11 +839,6 @@ public class DBASEReader {
 
             // read deleted byte for this record
             /* byte deletedByte = */ byteBuffer.get();
-//      char deletedChar = (char)deletedByte;
-//      if (DEBUG_FINE)
-//        System.out.println("deletedChar:'"+deletedChar+"'");
-//      if (deletedChar == '*' || deletedChar != ' ')
-//        continue;
 
             int position = byteBuffer.position();
             for (int field = 0; field < nFields; field++) {
