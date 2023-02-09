@@ -30,6 +30,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * Read support for ESRI shapefiles.
@@ -90,6 +91,47 @@ public class Shapefile {
         }
         EndianDataInputStream sfile = new EndianDataInputStream(myInputStream);
         return sfile;
+    }
+
+    public void stream(GeometryFactory geometryFactory, Consumer<Geometry> consumer) throws Exception {
+        EndianDataInputStream file = getInputStream();
+        if(file==null) throw new IOException("Failed connection or no content for "+baseURL);
+        ShapefileHeader mainHeader = new ShapefileHeader(file);
+        if(mainHeader.getVersion() < VERSION){System.err.println("Sf-->Warning, Shapefile format ("+mainHeader.getVersion()+") older that supported ("+VERSION+"), attempting to read anyway");}
+        if(mainHeader.getVersion() > VERSION){System.err.println("Sf-->Warning, Shapefile format ("+mainHeader.getVersion()+") newer that supported ("+VERSION+"), attempting to read anyway");}
+
+        int type=mainHeader.getShapeType();
+        ShapeHandler handler = getShapeHandler(type);
+        if (handler==null)
+            throw new ShapeTypeNotSupportedException("Unsupported shape type:"+type);
+
+        // Read until end of file (EOFException will be thrown)
+        try {
+            while (true)
+                streamRecord(file, handler, geometryFactory, consumer);
+        } catch(EOFException e) {
+        }
+    }
+
+    private void streamRecord(EndianDataInputStream file, ShapeHandler handler, GeometryFactory geometryFactory, Consumer<Geometry> consumer) throws IOException {
+        int recordNumber = file.readIntBE();
+        int contentLength = file.readIntBE();
+        try{
+            Geometry body = handler.read(file,geometryFactory,contentLength);
+            body.setUserData(Integer.valueOf(recordNumber - 1));
+            consumer.accept(body);
+            // System.out.println("Done record: " + recordNumber);
+        }catch(IllegalArgumentException r2d2){
+            geomFactory = new GeometryFactory(null, -1);
+            //System.out.println("Record " +recordNumber+ " has is NULL Shape");
+            consumer.accept(geomFactory.createGeometryCollection(null));
+        }catch(Exception c3p0){
+            geomFactory = new GeometryFactory(null, -1);
+            System.out.println("Error processing record (a):" +recordNumber);
+            System.out.println(c3p0.getMessage());
+            c3p0.printStackTrace();
+            consumer.accept(geomFactory.createGeometryCollection(null));
+        }
     }
 
     /**

@@ -3,6 +3,7 @@ package com.primalimited.gis;
 import org.locationtech.jts.geom.*;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 class MultiPointHandler implements ShapeHandler {
     int myShapeType= -1;
@@ -23,9 +24,91 @@ class MultiPointHandler implements ShapeHandler {
     }
 
     @Override
-    public Geometry read(EndianDataInputStream file,GeometryFactory geometryFactory,int contentLength) throws IOException,InvalidShapefileException{
-        //file.setLittleEndianMode(true);
+    public void stream(EndianDataInputStream file, GeometryFactory geometryFactory, int contentLength, Consumer<Geometry> consumer) throws IOException, InvalidShapefileException {
+        int actualReadWords = 0; //actual number of words read (word = 16bits)
 
+        int shapeType = file.readIntLE();
+        actualReadWords += 2;
+
+        if (shapeType == 0)
+            consumer.accept(geometryFactory.createMultiPointFromCoords(null));
+        if (shapeType != myShapeType) {
+            throw new InvalidShapefileException("Multipointhandler.read() - expected type code "+myShapeType+" but got "+shapeType);
+        }
+        //read bbox
+        file.readDoubleLE();
+        file.readDoubleLE();
+        file.readDoubleLE();
+        file.readDoubleLE();
+
+        actualReadWords += 4*4;
+
+        int numpoints = file.readIntLE();
+        actualReadWords += 2;
+
+        Coordinate[] coords = new Coordinate[numpoints];
+        for (int t=0;t<numpoints;t++)
+        {
+
+            double x = file.readDoubleLE();
+            double y = file.readDoubleLE();
+            actualReadWords += 8;
+            coords[t] = new Coordinate(x,y);
+        }
+        if (myShapeType == 18)
+        {
+            file.readDoubleLE(); //z min/max
+            file.readDoubleLE();
+            actualReadWords += 8;
+            for (int t=0;t<numpoints;t++)
+            {
+                double z =  file.readDoubleLE();//z
+                actualReadWords += 4;
+                coords[t].setZ(z);
+            }
+        }
+
+
+        if (myShapeType >= 18)
+        {
+            // int fullLength = numpoints * 8 + 20 +8 +4*numpoints + 8 +4*numpoints;
+            int fullLength;
+            if (myShapeType == 18)
+            {
+                //multipoint Z (with m)
+                fullLength = 20 + (numpoints * 8)  +8 +4*numpoints + 8 +4*numpoints;
+            }
+            else
+            {
+                //multipoint M (with M)
+                fullLength = 20 + (numpoints * 8)  +8 +4*numpoints;
+            }
+
+            if (contentLength >= fullLength)  //is the M portion actually there?
+            {
+                file.readDoubleLE(); //m min/max
+                file.readDoubleLE();
+                actualReadWords += 8;
+                for (int t=0;t<numpoints;t++)
+                {
+                    file.readDoubleLE();//m
+                    actualReadWords += 4;
+                }
+            }
+        }
+
+        //verify that we have read everything we need
+        while (actualReadWords < contentLength)
+        {
+            int junk2 = file.readShortBE();
+            actualReadWords += 1;
+        }
+
+        consumer.accept(geometryFactory.createMultiPointFromCoords(coords));
+    }
+
+    @Override
+    public Geometry read(EndianDataInputStream file,GeometryFactory geometryFactory,int contentLength) throws IOException,InvalidShapefileException{
         int actualReadWords = 0; //actual number of words read (word = 16bits)
 
         int shapeType = file.readIntLE();

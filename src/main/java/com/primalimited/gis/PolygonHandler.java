@@ -7,6 +7,7 @@ import org.locationtech.jts.geom.*;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 class PolygonHandler implements ShapeHandler {
     int myShapeType;
@@ -47,10 +48,158 @@ class PolygonHandler implements ShapeHandler {
     }
 
     @Override
+    public void stream(EndianDataInputStream file, GeometryFactory geometryFactory, int contentLength, Consumer<Geometry> consumer) throws IOException, InvalidShapefileException {
+        int actualReadWords = 0; //actual number of words read (word = 16bits)
+
+        // file.setLittleEndianMode(true);
+        int shapeType = file.readIntLE();
+        actualReadWords += 2;
+
+        if (shapeType ==0)
+        {
+            consumer.accept(geometryFactory.createMultiPolygon(null)); //null shape
+        }
+
+        if ( shapeType != myShapeType ) {
+            throw new InvalidShapefileException
+                    ("PolygonHandler.read() - got shape type "+shapeType+" but was expecting "+myShapeType);
+        }
+
+        //bounds
+        file.readDoubleLE();
+        file.readDoubleLE();
+        file.readDoubleLE();
+        file.readDoubleLE();
+
+        actualReadWords += 4*4;
+
+
+        int partOffsets[];
+
+        int numParts = file.readIntLE();
+        int numPoints = file.readIntLE();
+        actualReadWords += 4;
+
+        partOffsets = new int[numParts];
+
+        for(int i = 0;i<numParts;i++){
+            partOffsets[i]=file.readIntLE();
+            actualReadWords += 2;
+        }
+
+        //LinearRing[] rings = new LinearRing[numParts];
+        ArrayList<LinearRing> shells = new ArrayList<LinearRing>();
+        ArrayList<LinearRing> holes = new ArrayList<LinearRing>();
+        Coordinate[] coords = new Coordinate[numPoints];
+
+        for(int t=0;t<numPoints;t++)
+        {
+            coords[t]= new Coordinate(file.readDoubleLE(),file.readDoubleLE());
+            actualReadWords += 8;
+        }
+
+        if (myShapeType == 15)
+        {
+            //z
+            file.readDoubleLE();  //zmin
+            file.readDoubleLE();  //zmax
+            actualReadWords += 8;
+            for(int t=0;t<numPoints;t++)
+            {
+                coords[t].setZ(file.readDoubleLE());
+                actualReadWords += 4;
+            }
+        }
+
+        if (myShapeType >= 15)
+        {
+            //  int fullLength = 22 + (2*numParts) + (8*numPoints) + 8 + (4*numPoints)+ 8 + (4*numPoints);
+            int fullLength;
+            if (myShapeType == 15)
+            {
+                //polyZ (with M)
+                fullLength = 22 + (2*numParts) + (8*numPoints) + 8 + (4*numPoints)+ 8 + (4*numPoints);
+            }
+            else
+            {
+                //polyM (with M)
+                fullLength = 22 + (2*numParts) + (8*numPoints) + 8+ (4*numPoints) ;
+            }
+            if (contentLength >= fullLength)
+            {
+                file.readDoubleLE();  //mmin
+                file.readDoubleLE();  //mmax
+                actualReadWords += 8;
+                for(int t=0;t<numPoints;t++)
+                {
+                    file.readDoubleLE();
+                    actualReadWords += 4;
+                }
+            }
+        }
+
+        //verify that we have read everything we need
+        while (actualReadWords < contentLength)
+        {
+            int junk = file.readShortBE();
+            actualReadWords += 1;
+        }
+
+
+        int offset = 0;
+        int start,finish,length;
+        for(int part=0;part<numParts;part++){
+            start = partOffsets[part];
+            if(part == numParts-1){finish = numPoints;}
+            else {
+                finish=partOffsets[part+1];
+            }
+            length = finish-start;
+            Coordinate points[] = new Coordinate[length];
+            for(int i=0;i<length;i++){
+                points[i]=coords[offset];
+                offset++;
+            }
+            LinearRing ring = geometryFactory.createLinearRing(points);
+            /**
+             * Allow reading a 3-point ring, and treat it as a shell.
+             */
+            if(points.length >= 4 && Orientation.isCCW(points)){
+                holes.add(ring);
+            }
+            else{
+                shells.add(ring);
+            }
+        }
+
+        ArrayList<ArrayList<LinearRing>> holesForShells = assignHolesToShells(shells, holes);
+
+        Polygon[] polygons = new Polygon[shells.size()];
+        for (int i = 0; i < shells.size(); i++) {
+            polygons[i] = geometryFactory.createPolygon((LinearRing) shells.get(i),
+                    (LinearRing[]) ((ArrayList<LinearRing>) holesForShells.get(i))
+                            .toArray(new LinearRing[0]));
+        }
+
+        if (polygons.length == 1) {
+            consumer.accept(polygons[0]);
+        }
+
+        holesForShells = null;
+        shells = null;
+        holes = null;
+        // its a multi part
+
+        Geometry result = geometryFactory.createMultiPolygon(polygons);
+        // if (!(result.isValid() ))
+        // System.out.println("geom isn't valid");
+        consumer.accept(result);
+    }
+
+    @Override
     public Geometry read( EndianDataInputStream file , GeometryFactory geometryFactory, int contentLength)
             throws IOException, InvalidShapefileException
     {
-
         int actualReadWords = 0; //actual number of words read (word = 16bits)
 
         // file.setLittleEndianMode(true);

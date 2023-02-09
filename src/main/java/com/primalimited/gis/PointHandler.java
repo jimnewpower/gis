@@ -5,6 +5,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 class PointHandler implements ShapeHandler {
     int Ncoords=2; //2 = x,y ;  3= x,y,m ; 4 = x,y,z,m
@@ -23,8 +24,44 @@ class PointHandler implements ShapeHandler {
     }
 
     @Override
-    public Geometry read(EndianDataInputStream file,GeometryFactory geometryFactory,int contentLength) throws IOException,InvalidShapefileException
-    {
+    public void stream(EndianDataInputStream file, GeometryFactory geometryFactory, int contentLength, Consumer<Geometry> consumer) throws IOException, InvalidShapefileException {
+        //  file.setLittleEndianMode(true);
+        int actualReadWords = 0; //actual number of words read (word = 16bits)
+
+        int shapeType = file.readIntLE();
+        actualReadWords += 2;
+
+        if (shapeType != myShapeType)
+            throw new InvalidShapefileException("pointhandler.read() - handler's shapetype doesn't match file's");
+
+        double x = file.readDoubleLE();
+        double y = file.readDoubleLE();
+        double m , z = Double.NaN;
+        actualReadWords += 8;
+
+        if ( shapeType ==11 )
+        {
+            z= file.readDoubleLE();
+            actualReadWords += 4;
+        }
+        if ( shapeType >=11 )
+        {
+            m = file.readDoubleLE();
+            actualReadWords += 4;
+        }
+
+        //verify that we have read everything we need
+        while (actualReadWords < contentLength)
+        {
+            int junk2 = file.readShortBE();
+            actualReadWords += 1;
+        }
+
+        consumer.accept(geometryFactory.createPoint(new Coordinate(x,y,z)));
+    }
+
+    @Override
+    public Geometry read(EndianDataInputStream file,GeometryFactory geometryFactory,int contentLength) throws IOException,InvalidShapefileException {
         //  file.setLittleEndianMode(true);
         int actualReadWords = 0; //actual number of words read (word = 16bits)
 
@@ -59,7 +96,6 @@ class PointHandler implements ShapeHandler {
 
         return geometryFactory.createPoint(new Coordinate(x,y,z));
     }
-
 
     /**
      * Returns the shapefile shape type value for a point
