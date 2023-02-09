@@ -57,7 +57,7 @@ class ShapefileTest {
 
         InputStream dbInputStream = testHelper.getDbfInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
         List<DBField> fields = new DBASEReader()
-                .readRecord(dbInputStream, testHelper.readDbfHeader(TestHelper.LINE_SHAPEFILE_BASE_NAME), recordNumber);
+                .readRecord(dbInputStream, recordNumber);
         dbInputStream.close();
 
         final String[] expected = new String[] {

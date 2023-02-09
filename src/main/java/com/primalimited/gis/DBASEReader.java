@@ -647,13 +647,17 @@ public class DBASEReader {
      * metadata associated with that record.
      *
      * @param stream the input stream.
-     * @param headerInfo the .dbf header info.
      * @param record the record index.
      * @return list of db fields.
      * @throws IOException
      */
-    public List<DBField> readRecord(InputStream stream, DBASEHeaderInfo headerInfo, int record) throws IOException {
+    public List<DBField> readRecord(InputStream stream, int record) throws IOException {
         ByteBuffer byteBuffer = createByteBuffer(stream);
+
+        // process the file header
+        DBASEHeaderInfo headerInfo = readHeader(byteBuffer);
+        if (headerInfo.nRecords <= 0)
+            return Collections.emptyList();
 
         int nFields = (headerInfo.headerSize / DBASE_HEADER_LENGTH_BYTES) - 1;
         if (nFields <= 0)

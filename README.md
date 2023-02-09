@@ -35,15 +35,9 @@ An optional project file:
     // Select the specific geometry from the record index.
     Geometry geometry = geometryCollection.getGeometryN(selectedRecordIndex);
 
-    // First, we need to read the header info from the .dbf file.
-    InputStream headerStream = getDbfInputStream(); // Enter your own implementation here!
-    DBASEReader reader = new DBASEReader(headerStream);
-    DBASEReader.DBASEHeaderInfo header = reader.readHeader();
-    headerStream.close();
-
     // Now read the record from the .dbf file.
     InputStream dbfStream = getDbfInputStream(); // Enter your own implementation here!
-    DBASEReader reader = new DBASEReader(dbfStream);
+    DBASEReader reader = new DBASEReader();
     List<DBField> fields = reader
         .readRecord(
             dbfStream, 

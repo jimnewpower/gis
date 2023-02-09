@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -58,7 +57,7 @@ class DBASEReaderTest {
         DBASEReader reader = new DBASEReader();
         InputStream is = testHelper.getDbfInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
 
-        List<DBField> fields = reader.readRecord(is, testHelper.readDbfHeader(TestHelper.LINE_SHAPEFILE_BASE_NAME), record);
+        List<DBField> fields = reader.readRecord(is, record);
         is.close();
 
         assertEquals(8, fields.size(), "number of fields");

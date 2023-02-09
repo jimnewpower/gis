@@ -33,7 +33,7 @@ public class ClientTest {
 
         DBASEReader reader = new DBASEReader();
         InputStream dbfStream = testHelper.getDbfInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
-        List<DBField> fields = reader.readRecord(dbfStream, testHelper.readDbfHeader(TestHelper.LINE_SHAPEFILE_BASE_NAME), selectedRecordIndex);
+        List<DBField> fields = reader.readRecord(dbfStream, selectedRecordIndex);
         dbfStream.close();
         assertEquals(
                 "[DBRecord{name='tnmid', type='C', value={E04A85C8-DAF0-4927-97E8-B2A581988AD6}}, DBRecord{name='hudigit', type='N', value=2}, DBRecord{name='humod', type='C', value=NM}, DBRecord{name='linesource', type='C', value=DRG24}, DBRecord{name='metasource', type='C', value={596E21CA-D6C3-4BEC-9C18-BF63FB3727D4}}, DBRecord{name='loaddate', type='D', value=20170918}, DBRecord{name='shape_Leng', type='N', value=0.013047043209515}, DBRecord{name='ObjectID', type='N', value=5}]",
