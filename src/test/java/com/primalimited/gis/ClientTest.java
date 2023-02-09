@@ -18,6 +18,7 @@ class ClientTest {
     void clientTest_WBDLine() throws Exception {
         TestHelper testHelper = new TestHelper();
 
+        // Get the input stream.
         InputStream mainInputStream = testHelper.getMainInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
         Shapefile shapefile = new Shapefile(mainInputStream);
 
@@ -25,7 +26,7 @@ class ClientTest {
         GeometryCollection geometryCollection = shapefile.read(new GeometryFactory());
         mainInputStream.close();
 
-        // User clicks on a polyline on the map, returning the unique index into the geometry collection.
+        // Mimic use case: User clicks on a polyline on the map, returning the unique index into the geometry collection.
         final int selectedRecordIndex = 4;
 
         // Select the specific geometry from the record index.
@@ -34,6 +35,7 @@ class ClientTest {
         assertEquals(selectedRecordIndex, userData.toInt(), "user data set during read should be the record index");
         assertEquals("LINESTRING (-105.67258583183201 38.14034331371528, -105.6725164557904 38.1402445730904, -105.67252705058206 38.14015438559056, -105.67258269849867 38.14000084600747, -105.67276205683169 38.13964833038301, -105.67303219953965 38.13924120850862, -105.67315564849775 38.13901518767568, -105.67324206933097 38.13848293455146, -105.67330242870588 38.13759935017788, -105.67325374641428 38.13726615642838, -105.67314667558111 38.13678909809579, -105.67298197662302 38.1362492710133, -105.67280719537331 38.135853719972204, -105.67263398599857 38.13562939809759, -105.67254055474871 38.1353955991396, -105.67249335474878 38.13522463038987, -105.6723995912073 38.13495478143193, -105.67230501516576 38.13459481268251, -105.67221126829088 38.13432497309958, -105.67196869641629 38.13400190018342, -105.67169107037506 38.133588902267434, -105.67105275579269 38.13241188664426, -105.67083243600138 38.132025587686485, -105.67032399746051 38.131325493937595, -105.67023157871063 38.13119985435446, -105.67009392350252 38.131119526229554, -105.6699449412111 38.13104826685469, -105.6698072880863 38.1309679481048, -105.66971498287813 38.13085580956334, -105.66969139225313 38.13077032518845, -105.66972487975306 38.13068901998025, -105.66978077350302 38.13056252623045, -105.66992696516945 38.130327356439125, -105.66997177871104 38.13023697518929, -105.66996989537773 38.130029698106284, -105.6699431349611 38.12959723873195, -105.66990717662782 38.1294081710239, -105.66991726829445 38.12926391269082, -105.66998416933603 38.12909229185772, -105.67005476725257 38.128661063733375)", geometry.toString());
 
+        // Find record in dbase file, based on record index from user data.
         DBASEReader reader = new DBASEReader();
         InputStream dbfStream = testHelper.getDbfInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
         List<DBField> fields = reader.readRecord(dbfStream, userData.toInt());
@@ -41,6 +43,15 @@ class ClientTest {
         assertEquals(
                 "[DBRecord{name='tnmid', type='C', value={E04A85C8-DAF0-4927-97E8-B2A581988AD6}}, DBRecord{name='hudigit', type='N', value=2}, DBRecord{name='humod', type='C', value=NM}, DBRecord{name='linesource', type='C', value=DRG24}, DBRecord{name='metasource', type='C', value={596E21CA-D6C3-4BEC-9C18-BF63FB3727D4}}, DBRecord{name='loaddate', type='D', value=20170918}, DBRecord{name='shape_Leng', type='N', value=0.013047043209515}, DBRecord{name='ObjectID', type='N', value=5}]",
                 Arrays.toString(fields.toArray())
+        );
+
+        // Convert line string to geoJSON string.
+        org.locationtech.jts.io.geojson.GeoJsonWriter writer = new org.locationtech.jts.io.geojson.GeoJsonWriter();
+        String geoJSON = writer.write(geometry);
+        assertEquals(
+                "{\"type\":\"LineString\",\"coordinates\":[[-105.67258583,38.14034331],[-105.67251646,38.14024457],[-105.67252705,38.14015439],[-105.6725827,38.14000085],[-105.67276206,38.13964833],[-105.6730322,38.13924121],[-105.67315565,38.13901519],[-105.67324207,38.13848293],[-105.67330243,38.13759935],[-105.67325375,38.13726616],[-105.67314668,38.1367891],[-105.67298198,38.13624927],[-105.6728072,38.13585372],[-105.67263399,38.1356294],[-105.67254055,38.1353956],[-105.67249335,38.13522463],[-105.67239959,38.13495478],[-105.67230502,38.13459481],[-105.67221127,38.13432497],[-105.6719687,38.1340019],[-105.67169107,38.1335889],[-105.67105276,38.13241189],[-105.67083244,38.13202559],[-105.670324,38.13132549],[-105.67023158,38.13119985],[-105.67009392,38.13111953],[-105.66994494,38.13104827],[-105.66980729,38.13096795],[-105.66971498,38.13085581],[-105.66969139,38.13077033],[-105.66972488,38.13068902],[-105.66978077,38.13056253],[-105.66992697,38.13032736],[-105.66997178,38.13023698],[-105.6699699,38.1300297],[-105.66994313,38.12959724],[-105.66990718,38.12940817],[-105.66991727,38.12926391],[-105.66998417,38.12909229],[-105.67005477,38.12866106]],\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"EPSG:0\"}}}",
+                geoJSON,
+                "geoJSON line string"
         );
     }
 
