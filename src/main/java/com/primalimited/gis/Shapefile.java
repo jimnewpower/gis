@@ -106,7 +106,8 @@ public class Shapefile {
         ArrayList<Geometry> list = new ArrayList<>();
         int type=mainHeader.getShapeType();
         ShapeHandler handler = getShapeHandler(type);
-        if(handler==null)throw new ShapeTypeNotSupportedException("Unsuported shape type:"+type);
+        if (handler==null)
+            throw new ShapeTypeNotSupportedException("Unsupported shape type:"+type);
 
         int recordNumber=0;
         int contentLength=0;

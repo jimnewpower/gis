@@ -2,9 +2,12 @@
 A simple Java library for loading ESRI Shapefiles.
 
 ## Dependencies
-Java Topology Suite:
-- org.locationtech.jts.io
-- org.locationtech.jts-core
+[Java Topology Suite](https://github.com/locationtech/jts):
+- [org.locationtech.jts.io](https://mvnrepository.com/artifact/org.locationtech.jts/jts-io)
+- [org.locationtech.jts-core](https://mvnrepository.com/artifact/org.locationtech.jts/jts-core)
+
+## Documentation
+[ESRI Shapefile Technical Description](./ShapefileTechnicalDescription.pdf)
 
 ## Basics
 Shapefiles consist of a minimum of 2 files:
