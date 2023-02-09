@@ -10,11 +10,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ClientTest {
 
     @Test
-    void clientTest() throws Exception {
+    void clientTest_WBDLine() throws Exception {
         TestHelper testHelper = new TestHelper();
 
         InputStream mainInputStream = testHelper.getMainInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
@@ -40,4 +41,77 @@ public class ClientTest {
                 Arrays.toString(fields.toArray())
         );
     }
+
+    @Test
+    void coloradoTest() throws Exception {
+        final String filename = TestHelper.COLORADO_SHAPEFILE_BASE_NAME;
+        TestHelper testHelper = new TestHelper();
+
+        InputStream mainInputStream = testHelper.getMainInputStream(filename);
+        Shapefile shapefile = new Shapefile(mainInputStream);
+
+        // Read the entire geometry collection from the shapefile.
+        GeometryCollection geometryCollection = shapefile.read(new GeometryFactory());
+        mainInputStream.close();
+
+        assertNotNull(geometryCollection, "geometry collection");
+        int nGeometries = geometryCollection.getNumGeometries();
+        assertEquals(63, nGeometries, "n geometries");
+
+        final int recordIndex = 60;
+        Geometry geometry = geometryCollection.getGeometryN(recordIndex);
+        assertEquals(
+                "POLYGON ((-107.47185516357422 36.99877166748047, -108.37183380126953 36.999473571777344, -108.36638641357422 37.019710540771484, -108.32830810546875 37.0582389831543, -108.31259155273438 37.10139846801758, -108.28411102294922 37.14436340332031, -108.2918472290039 37.16574478149414, -108.28955078125 37.21041488647461, -108.24185943603516 37.2467155456543, -108.19620513916016 37.33832550048828, -108.11116027832031 37.38025665283203, -108.07246398925781 37.43507385253906, -108.03474426269531 37.45528793334961, -108.01219177246094 37.58235549926758, -107.9652328491211 37.63120651245117, -107.47590637207031 37.629425048828125, -107.4769058227539 37.42544174194336, -107.47185516357422 36.99877166748047))",
+                geometry.toString(),
+                "geometry string"
+        );
+
+        DBASEReader reader = new DBASEReader();
+        InputStream dbfStream = testHelper.getDbfInputStream(filename);
+        List<DBField> fields = reader.readRecord(dbfStream, recordIndex);
+        dbfStream.close();
+        assertEquals(
+                "[DBRecord{name='NAME', type='Ń', value=null}, DBRecord{name='CNTY_FIPS', type='⅃', value=null}, DBRecord{name='FIPS', type='⑃', value=null}]",
+                Arrays.toString(fields.toArray()),
+                "database record"
+        );
+
+    }
+
+    @Test
+    void citiesTest() throws Exception {
+        final String filename = TestHelper.CITIES_SHAPEFILE_BASE_NAME;
+        TestHelper testHelper = new TestHelper();
+
+        InputStream mainInputStream = testHelper.getMainInputStream(filename);
+        Shapefile shapefile = new Shapefile(mainInputStream);
+
+        // Read the entire geometry collection from the shapefile.
+        GeometryCollection geometryCollection = shapefile.read(new GeometryFactory());
+        mainInputStream.close();
+
+        assertNotNull(geometryCollection, "geometry collection");
+        int nGeometries = geometryCollection.getNumGeometries();
+        assertEquals(35, nGeometries, "n geometries");
+
+        final int recordIndex = 3;
+        Geometry geometry = geometryCollection.getGeometryN(recordIndex);
+        assertEquals(
+                "POINT (-122.2714765517 37.81045118311)",
+                geometry.toString(),
+                "geometry string"
+        );
+
+        DBASEReader reader = new DBASEReader();
+        InputStream dbfStream = testHelper.getDbfInputStream(filename);
+        List<DBField> fields = reader.readRecord(dbfStream, recordIndex);
+        dbfStream.close();
+        assertEquals(
+                "[DBRecord{name='AREA', type='N', value=0}, DBRecord{name='PERIMETER', type='N', value=0}, DBRecord{name='CITIES_', type='N', value=35}, DBRecord{name='CITIES_ID', type='N', value=70}, DBRecord{name='CITY_NAME', type='C', value=Oakland}, DBRecord{name='GMI_ADMIN', type='C', value=USA-CAL}, DBRecord{name='ADMIN_NAME', type='C', value=California}, DBRecord{name='FIPS_CNTRY', type='C', value=US}, DBRecord{name='CNTRY_NAME', type='C', value=United States}, DBRecord{name='STATUS', type='C', value=Other}, DBRecord{name='POP_RANK', type='N', value=4}, DBRecord{name='POP_CLASS', type='C', value=250,000 to 500,000}, DBRecord{name='PORT_ID', type='N', value=16340}]",
+                Arrays.toString(fields.toArray()),
+                "database record"
+        );
+
+    }
+
 }

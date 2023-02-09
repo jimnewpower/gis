@@ -696,6 +696,9 @@ public class DBASEReader {
 
             byte decimalCount = byteBuffer.get();
             decimalCounts[field] = decimalCount;
+
+            if (DEBUG_FINE)
+                System.out.println(String.format("name %s type %c length %d\n", fieldName, fieldType, fieldLength));
         }
 
         int nBytesToSkip = nFields * DBASE_HEADER_LENGTH_BYTES;
