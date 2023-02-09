@@ -15,7 +15,7 @@ import java.util.*;
  */
 public class DBASEReader {
     private static final int DBASE_HEADER_LENGTH_BYTES = 32;
-    public static final int FIELD_NAME_LENGTH = 11;
+    private static final int FIELD_NAME_LENGTH = 11;
 
     // debug flags
     private static final boolean DEBUG_HEADER = false;
@@ -26,6 +26,7 @@ public class DBASEReader {
      * Constructor
      *
      * @param inputStream .dbf input stream
+     * @return true if stream represents a valid .dbf file, false otherwise
      */
     public static boolean isDBFFile(InputStream inputStream) {
         DBASEReader reader = new DBASEReader();
@@ -62,47 +63,47 @@ public class DBASEReader {
         private short headerSize = -1;
         private short recordSize = -1;
 
-        public void dump() {
+        void dump() {
             System.out.println("date:"+date.toString());
             System.out.println("description:"+description);
             System.out.println("nRecords:"+nRecords);
             System.out.println("headerSize:"+headerSize);
             System.out.println("recordSize:"+recordSize);
         }
-        public Calendar getDate() {
+        Calendar getDate() {
             return date;
         }
-        public void setDate(Calendar date) {
+        void setDate(Calendar date) {
             this.date = date;
         }
-        public int getNRecords() {
+        int getNRecords() {
             return nRecords;
         }
-        public void setNRecords(int records) {
+        void setNRecords(int records) {
             nRecords = records;
         }
-        public final int getNFields() {
+        int getNFields() {
             return nFields;
         }
-        public final void setNFields(int fields) {
+        void setNFields(int fields) {
             nFields = fields;
         }
-        public short getHeaderSize() {
+        short getHeaderSize() {
             return headerSize;
         }
-        public void setHeaderSize(short headerSize) {
+        void setHeaderSize(short headerSize) {
             this.headerSize = headerSize;
         }
-        public short getRecordSize() {
+        short getRecordSize() {
             return recordSize;
         }
-        public void setRecordSize(short recordSize) {
+        void setRecordSize(short recordSize) {
             this.recordSize = recordSize;
         }
-        public byte getDescription() {
+        byte getDescription() {
             return description;
         }
-        public void setDescription(byte description) {
+        void setDescription(byte description) {
             this.description = description;
         }
     }
@@ -110,8 +111,10 @@ public class DBASEReader {
     /**
      * Reads header only from DBASE file
      *
-     * @return new instance of DBASEHeaderInfo object
-     * @throws IOException, ShapefileException
+     * @param inputStream the .dbf input stream.
+     * @return new instance of DBASEHeaderInfo object.
+     * @throws IOException if can't read shapefile.
+     * @throws ShapefileException if a shapefile-specific error occurred.
      */
     public DBASEHeaderInfo readHeader(InputStream inputStream) throws IOException, ShapefileException {
         byte[] data = new byte[DBASE_HEADER_LENGTH_BYTES];
@@ -346,7 +349,7 @@ public class DBASEReader {
      *
      * @param inputStream the .dbf input stream
      * @return array of column name strings
-     * @throws IOException
+     * @throws IOException if there was an error reading from the input stream
      */
     public String[] readColumnNames(InputStream inputStream) throws IOException {
         ByteBuffer byteBuffer = createByteBuffer(inputStream);
@@ -409,6 +412,14 @@ public class DBASEReader {
         return (b & 0xFF);
     }
 
+    /**
+     * Read a column of data from the .dbf file.
+     *
+     * @param inputStream the .dbf file input stream.
+     * @param columnName the .dbf column name.
+     * @return array of objects from the column.
+     * @throws Exception if error occurred while reading.
+     */
     public Object[] readColumn(InputStream inputStream, String columnName) throws Exception {
         ByteBuffer byteBuffer = createByteBuffer(inputStream);
 
@@ -535,6 +546,14 @@ public class DBASEReader {
         return(data);
     }
 
+    /**
+     * Read the column type from the .dbf file.
+     *
+     * @param inputStream the .dbf file input stream.
+     * @param columnName the column name.
+     * @return the type of the column.
+     * @throws Exception if an error occurred.
+     */
     public Class<?> readColumnType(InputStream inputStream, String columnName) throws Exception {
         if (DEBUG_COARSE)
             System.out.println("readColumn() columnName="+columnName);
@@ -649,7 +668,7 @@ public class DBASEReader {
      * @param stream the input stream.
      * @param record the record index.
      * @return list of db fields.
-     * @throws IOException
+     * @throws IOException if there was an error reading from the input stream.
      */
     public List<DBField> readRecord(InputStream stream, int record) throws IOException {
         ByteBuffer byteBuffer = createByteBuffer(stream);
@@ -761,7 +780,7 @@ public class DBASEReader {
      *
      * @param inputStream the .dbf input stream.
      * @return new instance of a DBASETableData, populated with the DBASE data.
-     * @throws IOException
+     * @throws IOException if an error occurred while reading the shapefile.
      */
     public DBASETableData read(InputStream inputStream) throws IOException {
         ByteBuffer byteBuffer = createByteBuffer(inputStream);
@@ -884,6 +903,12 @@ public class DBASEReader {
         return(returnData);
     }
 
+    /**
+     * Read all records with the record number added to the data.
+     *
+     * @param byteBuffer the .dbf file byte buffer.
+     * @return new instance of DBASETableData, including record numbers.
+     */
     public DBASETableData readWithRecordNumberRowHeaders(ByteBuffer byteBuffer) {
         /* make sure we have proper byte order */
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
