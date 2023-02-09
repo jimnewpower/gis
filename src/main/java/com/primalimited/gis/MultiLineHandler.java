@@ -9,12 +9,12 @@ class MultiLineHandler implements ShapeHandler {
     private PrecisionModel precisionModel = new PrecisionModel();
     private GeometryFactory geometryFactory = new GeometryFactory(precisionModel, 0);
 
-    public MultiLineHandler()
+    MultiLineHandler()
     {
         myShapeType = 3;
     }
 
-    public MultiLineHandler(int type) throws InvalidShapefileException
+    MultiLineHandler(int type) throws InvalidShapefileException
     {
         if  ( (type != 3) &&  (type != 13) &&  (type != 23) )
             throw new InvalidShapefileException("MultiLineHandler constructor - expected type to be 3,13 or 23");
@@ -22,7 +22,7 @@ class MultiLineHandler implements ShapeHandler {
         myShapeType = type;
     }
 
-
+    @Override
     public Geometry read( EndianDataInputStream file , GeometryFactory geometryFactory, int contentLength) throws IOException,InvalidShapefileException
     {
 
@@ -157,10 +157,12 @@ class MultiLineHandler implements ShapeHandler {
     /**
      * Get the type of shape stored (Shapefile.ARC)
      */
+    @Override
     public int getShapeType(){
         return myShapeType;
     }
 
+    @Override
     public int getLength(Geometry geometry){
         MultiLineString multi = (MultiLineString) geometry;
 
@@ -224,6 +226,5 @@ class MultiLineHandler implements ShapeHandler {
         result[0] = (zmin);
         result[1] = (zmax);
         return result;
-
     }
 }

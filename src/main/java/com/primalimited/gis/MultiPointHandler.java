@@ -10,11 +10,11 @@ class MultiPointHandler implements ShapeHandler {
     private GeometryFactory geometryFactory = new GeometryFactory(precisionModel, 0);
 
     /** Creates new MultiPointHandler */
-    public MultiPointHandler() {
+    MultiPointHandler() {
         myShapeType = 8;
     }
 
-    public MultiPointHandler(int type) throws InvalidShapefileException
+    MultiPointHandler(int type) throws InvalidShapefileException
     {
         if  ( (type != 8) &&  (type != 18) &&  (type != 28) )
             throw new InvalidShapefileException("Multipointhandler constructor - expected type to be 8, 18, or 28");
@@ -22,6 +22,7 @@ class MultiPointHandler implements ShapeHandler {
         myShapeType = type;
     }
 
+    @Override
     public Geometry read(EndianDataInputStream file,GeometryFactory geometryFactory,int contentLength) throws IOException,InvalidShapefileException{
         //file.setLittleEndianMode(true);
 
@@ -153,7 +154,8 @@ class MultiPointHandler implements ShapeHandler {
      * Returns the shapefile shape type value for a point
      * @return int Shapefile.POINT
      */
-    public  int getShapeType(){
+    @Override
+    public int getShapeType(){
         return myShapeType;
     }
 
@@ -161,7 +163,8 @@ class MultiPointHandler implements ShapeHandler {
      * Calcuates the record length of this object.
      * @return int The length of the record that this shapepoint will take up in a shapefile
      **/
-    public int getLength(Geometry geometry){
+    @Override
+    public int getLength(Geometry geometry) {
         MultiPoint mp = (MultiPoint) geometry;
 
         if (myShapeType == 8)

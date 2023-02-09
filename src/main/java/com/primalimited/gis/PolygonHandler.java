@@ -13,12 +13,12 @@ class PolygonHandler implements ShapeHandler {
     private PrecisionModel precisionModel = new PrecisionModel();
     private GeometryFactory geometryFactory = new GeometryFactory(precisionModel, 0);
 
-    public PolygonHandler()
+    PolygonHandler()
     {
         myShapeType = 5;
     }
 
-    public PolygonHandler(int type) throws InvalidShapefileException
+    PolygonHandler(int type) throws InvalidShapefileException
     {
         if  ( (type != 5) &&  (type != 15) &&  (type != 25) )
             throw new InvalidShapefileException("PolygonHandler constructor - expected type to be 5, 15, or 25.");
@@ -46,6 +46,7 @@ class PolygonHandler implements ShapeHandler {
         return false;
     }
 
+    @Override
     public Geometry read( EndianDataInputStream file , GeometryFactory geometryFactory, int contentLength)
             throws IOException, InvalidShapefileException
     {
@@ -268,10 +269,13 @@ class PolygonHandler implements ShapeHandler {
     }
 
 
+    @Override
     public int getShapeType(){
         return myShapeType;
     }
-    public int getLength(Geometry geometry){
+
+    @Override
+    public int getLength(Geometry geometry) {
 
         int nrings=0;
 
@@ -334,6 +338,5 @@ class PolygonHandler implements ShapeHandler {
         result[0] = (zmin);
         result[1] = (zmax);
         return result;
-
     }
 }

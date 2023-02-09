@@ -2,6 +2,11 @@ package com.primalimited.gis;
 
 import java.util.Objects;
 
+/**
+ * A pair of values.
+ * @param <A>
+ * @param <B>
+ */
 class Pair<A, B> {
     private final A aValue;
     private final B bValue;

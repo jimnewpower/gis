@@ -30,6 +30,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 
+/**
+ * Read support for ESRI shapefiles.
+ */
 public class Shapefile {
     static final int    SHAPEFILE_ID = 9994;
     static final int    VERSION = 1000;
@@ -78,7 +81,6 @@ public class Shapefile {
         myInputStream = IS;
     }
 
-
     private EndianDataInputStream getInputStream() throws IOException
     {
         if (myInputStream == null)
@@ -89,12 +91,11 @@ public class Shapefile {
         return sfile;
     }
 
-
     /**
      * Initialises a shapefile from disk.
      * Use Shapefile(String) if you don't want to use LEDataInputStream directly (recomened)
      */
-    public GeometryCollection read(GeometryFactory geometryFactory) throws IOException,ShapefileException,Exception{
+    public GeometryCollection read(GeometryFactory geometryFactory) throws Exception {
         EndianDataInputStream file = getInputStream();
         if(file==null) throw new IOException("Failed connection or no content for "+baseURL);
         ShapefileHeader mainHeader = new ShapefileHeader(file);

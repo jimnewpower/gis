@@ -7,22 +7,22 @@ import org.locationtech.jts.geom.GeometryFactory;
 import java.io.IOException;
 
 class PointHandler implements ShapeHandler {
-
     int Ncoords=2; //2 = x,y ;  3= x,y,m ; 4 = x,y,z,m
     int myShapeType = -1;
 
-    public PointHandler(int type) throws InvalidShapefileException
+    PointHandler(int type) throws InvalidShapefileException
     {
         if ( (type != 1) && (type != 11) && (type != 21))// 2d, 2d+m, 3d+m
             throw new InvalidShapefileException("PointHandler constructor: expected a type of 1, 11 or 21");
         myShapeType = type;
     }
 
-    public PointHandler()
+    PointHandler()
     {
         myShapeType = 1; //2d
     }
 
+    @Override
     public Geometry read(EndianDataInputStream file,GeometryFactory geometryFactory,int contentLength) throws IOException,InvalidShapefileException
     {
         //  file.setLittleEndianMode(true);
@@ -65,7 +65,8 @@ class PointHandler implements ShapeHandler {
      * Returns the shapefile shape type value for a point
      * @return int Shapefile.POINT
      */
-    public  int getShapeType(){
+    @Override
+    public int getShapeType(){
         return myShapeType;
     }
 
@@ -73,7 +74,8 @@ class PointHandler implements ShapeHandler {
      * Calcuates the record length of this object.
      * @return int The length of the record that this shapepoint will take up in a shapefile
      **/
-    public int getLength(Geometry geometry){
+    @Override
+    public int getLength(Geometry geometry) {
         if (myShapeType == Shapefile.POINT)
             return 10;
         if (myShapeType == Shapefile.POINTM)
