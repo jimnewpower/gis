@@ -72,11 +72,10 @@ class MultiLineHandler implements ShapeHandler {
 
         for (int t =0;t<numPoints; t++)
         {
-            coords[t] = new Coordinate(file.readDoubleLE(),file.readDoubleLE());
+//            coords[t] = new Coordinate(file.readDoubleLE(),file.readDoubleLE());
+            coords[t] = PrecisionModelLatLong.INSTANCE.createCoordinate(file.readDoubleLE(),file.readDoubleLE());
             actualReadWords += 8;
         }
-
-
 
         if (myShapeType ==13)
         {
@@ -86,7 +85,8 @@ class MultiLineHandler implements ShapeHandler {
 
             for (int t =0;t<numPoints; t++)
             {
-                coords[t].setZ(file.readDoubleLE()); //z value
+//                coords[t].setZ(file.readDoubleLE()); //z value
+                coords[t].setZ(PrecisionModelLatLong.INSTANCE.makePrecise(file.readDoubleLE())); //z value
                 actualReadWords += 4;
             }
         }
