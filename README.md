@@ -6,6 +6,17 @@ Java Topology Suite:
 - org.locationtech.jts.io
 - org.locationtech.jts-core
 
+## Basics
+Shapefiles consist of a minimum of 2 files:
+- ._shp_ the main file, containing the feature data.
+- ._shx_ the index file, with offsets and lengths into the main file for each record.  
+
+An optional database file:
+- ._dbf_ the dBASE file, basically a table with any number of columns of metadata for each record in the main file.  
+
+An optional project file:
+- ._prj_ the Project file, contains map projection info.
+
 ## Examples
 - Load geometries from a shapefile:
 ```
