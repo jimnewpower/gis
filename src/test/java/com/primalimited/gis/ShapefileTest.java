@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.io.kml.KMLWriter;
 
 import java.io.InputStream;
 import java.util.List;
@@ -74,5 +75,41 @@ class ShapefileTest {
         for (int i = 0; i < fields.size(); i++) {
             assertEquals(expected[i], fields.get(i).toString(), "field " + i + " toString()");
         }
+    }
+
+    @Test
+    public void testKMLWriter() throws Exception {
+        final int recordNumber = 4;
+
+        TestHelper testHelper = new TestHelper();
+
+        InputStream mainFileInputStream = testHelper.getMainInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
+        Shapefile shapefile = new Shapefile(mainFileInputStream);
+        GeometryCollection gc = shapefile.read(new GeometryFactory());
+        mainFileInputStream.close();
+
+
+        assertNotNull(gc, "geometry collection returned from shapefile read().");
+        assertEquals(3072, gc.getNumGeometries(), "number of records read from shapefile");
+        Geometry geometry = gc.getGeometryN(recordNumber);
+
+        KMLWriter kmlWriter = new KMLWriter();
+        kmlWriter.setPrecision(6);
+        String kmlString = kmlWriter.write(geometry);
+
+        final String expected =
+"""
+<LineString>
+  <coordinates>-105.672586,38.140343 -105.672516,38.140245 -105.672527,38.140154 -105.672583,38.140001 -105.672762,38.139648
+     -105.673032,38.139241 -105.673156,38.139015 -105.673242,38.138483 -105.673302,38.137599 -105.673254,38.137266
+     -105.673147,38.136789 -105.672982,38.136249 -105.672807,38.135854 -105.672634,38.135629 -105.672541,38.135396
+     -105.672493,38.135225 -105.6724,38.134955 -105.672305,38.134595 -105.672211,38.134325 -105.671969,38.134002
+     -105.671691,38.133589 -105.671053,38.132412 -105.670832,38.132026 -105.670324,38.131325 -105.670232,38.1312
+     -105.670094,38.13112 -105.669945,38.131048 -105.669807,38.130968 -105.669715,38.130856 -105.669691,38.13077
+     -105.669725,38.130689 -105.669781,38.130563 -105.669927,38.130327 -105.669972,38.130237 -105.66997,38.13003
+     -105.669943,38.129597 -105.669907,38.129408 -105.669917,38.129264 -105.669984,38.129092 -105.670055,38.128661</coordinates>
+</LineString>
+""";
+        assertEquals(expected, kmlString, "KML String");
     }
 }
