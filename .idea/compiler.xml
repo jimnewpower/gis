@@ -6,8 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="gis" />
+        <module name="prima-gis" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="gis" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>
