@@ -4,8 +4,10 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DBASEReaderTest {
@@ -14,10 +16,10 @@ class DBASEReaderTest {
     public void readerTest() throws IOException {
         TestHelper testHelper = new TestHelper();
 
-        InputStream is = testHelper.getDbfInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
-        DBASEReader reader = new DBASEReader(is);
+        DBASEReader reader = new DBASEReader();
 
-        DBASETableData data = reader.read();
+        InputStream is = testHelper.getDbfInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
+        DBASETableData data = reader.read(is);
         is.close();
 
         assertEquals(3072, data.getNRecords());
@@ -39,7 +41,7 @@ class DBASEReaderTest {
     }
 
     @Test
-    void readSingleRecordTest() throws IOException {
+    void readSingleRecordTest() throws IOException, ShapefileException {
         final int record = 4;
         final String[] expected = new String[] {
                 "DBRecord{name='tnmid', type='C', value={E04A85C8-DAF0-4927-97E8-B2A581988AD6}}",
@@ -53,8 +55,8 @@ class DBASEReaderTest {
         };
 
         TestHelper testHelper = new TestHelper();
+        DBASEReader reader = new DBASEReader();
         InputStream is = testHelper.getDbfInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
-        DBASEReader reader = new DBASEReader(is);
 
         List<DBField> fields = reader.readRecord(is, testHelper.readDbfHeader(TestHelper.LINE_SHAPEFILE_BASE_NAME), record);
         is.close();
@@ -63,5 +65,27 @@ class DBASEReaderTest {
         for (int i = 0; i < fields.size(); i++) {
             assertEquals(expected[i], fields.get(i).toString(), "field " + i + " toString()");
         }
+    }
+
+    @Test
+    void readColumnNames() throws ShapefileException, IOException {
+        TestHelper testHelper = new TestHelper();
+
+        DBASEReader reader = new DBASEReader();
+        InputStream is = testHelper.getDbfInputStream(TestHelper.LINE_SHAPEFILE_BASE_NAME);
+        String[] columnNames = reader.readColumnNames(is);
+
+        final String[] expected = new String[] {
+                "tnmid",
+                "hudigit",
+                "humod",
+                "linesource",
+                "metasource",
+                "loaddate",
+                "shape_Leng",
+                "ObjectID"
+        };
+
+        assertArrayEquals(expected, columnNames, "column names from .dbf file");
     }
 }

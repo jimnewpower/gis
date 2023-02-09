@@ -30,11 +30,11 @@ public class TestHelper {
                 .getResourceAsStream(baseFilename + "." + ShapefileConstants.SHAPEFILE_PROJECTION_EXTENSION);
     }
 
-    DBASEReader.DBASEHeaderInfo readDbfHeader(String baseFilename) throws IOException {
+    DBASEReader.DBASEHeaderInfo readDbfHeader(String baseFilename) throws IOException, ShapefileException {
         InputStream is = getDbfInputStream(baseFilename);
-        DBASEReader reader = new DBASEReader(is);
+        DBASEReader reader = new DBASEReader();
 
-        DBASEReader.DBASEHeaderInfo data = reader.readHeader();
+        DBASEReader.DBASEHeaderInfo data = reader.readHeader(is);
         is.close();
         return data;
     }

@@ -12,7 +12,6 @@ import java.util.*;
  * dBASE (.dbf) file reader.
  *
  * @author Jim Newpower
- * Created: May 3, 2004
  */
 public class DBASEReader {
     private static final int DBASE_HEADER_LENGTH_BYTES = 32;
@@ -23,22 +22,16 @@ public class DBASEReader {
     private static final boolean DEBUG_COARSE = false;
     private static final boolean DEBUG_FINE = false;
 
-    private final InputStream inputStream;
-
     /**
      * Constructor
      *
      * @param inputStream .dbf input stream
      */
-    public DBASEReader(InputStream inputStream) {
-        this.inputStream = inputStream;
-    }
-
     public static boolean isDBFFile(InputStream inputStream) {
-        DBASEReader reader = new DBASEReader(inputStream);
+        DBASEReader reader = new DBASEReader();
         DBASEHeaderInfo headerInfo = null;
         try {
-            headerInfo = reader.readHeader();
+            headerInfo = reader.readHeader(inputStream);
         } catch (Exception ex) {
             return(false);
         }
@@ -118,13 +111,15 @@ public class DBASEReader {
      * Reads header only from DBASE file
      *
      * @return new instance of DBASEHeaderInfo object
-     * @throws Exception
+     * @throws IOException, ShapefileException
      */
-    public DBASEHeaderInfo readHeader() throws IOException {
+    public DBASEHeaderInfo readHeader(InputStream inputStream) throws IOException, ShapefileException {
         byte[] data = new byte[DBASE_HEADER_LENGTH_BYTES];
         int nRead = inputStream.readNBytes(data, 0, DBASE_HEADER_LENGTH_BYTES);
-        if (nRead != DBASE_HEADER_LENGTH_BYTES)
-            System.out.println("Error: expected " + DBASE_HEADER_LENGTH_BYTES + " but read " + nRead);
+        if (nRead != DBASE_HEADER_LENGTH_BYTES) {
+            String message = String.format("Error: expected %d header bytes but read %d bytes.", DBASE_HEADER_LENGTH_BYTES, nRead);
+            throw new ShapefileException(message);
+        }
 
         ByteBuffer byteBuffer = ByteBuffer.wrap(data);
 
@@ -346,9 +341,11 @@ public class DBASEReader {
         return(number);
     }
 
-    public String[] readColumnNames() throws Exception {
+    public String[] readColumnNames(InputStream inputStream) throws IOException, ShapefileException {
+        ByteBuffer byteBuffer = createByteBuffer(inputStream);
+
         // process the file header
-        DBASEHeaderInfo headerInfo = readHeader();
+        DBASEHeaderInfo headerInfo = readHeader(byteBuffer);
         if (headerInfo.nRecords <= 0)
             return(null);
 
@@ -361,31 +358,11 @@ public class DBASEReader {
         if (nFields <= 0)
             return(null);
         String[] fieldNames = new String[nFields];
-        char[] fieldTypes = new char[nFields];
-        int[] fieldLengths = new int[nFields];
-        int[] decimalCounts = new int[nFields];
-
-        // Allocate byte buffer to read column names
-        int nBytes = FIELD_NAME_LENGTH * nFields;
-        byte[] data = new byte[nBytes];
-        int nRead = inputStream.readNBytes(data, DBASE_HEADER_LENGTH_BYTES, nBytes);
-        if (nRead != DBASE_HEADER_LENGTH_BYTES)
-            System.out.println("Error: expected " + DBASE_HEADER_LENGTH_BYTES + " but read " + nRead);
-
-        ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-
-        /* make sure we have proper byte order */
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        /* make sure we are positioned at the start of the file */
-        byteBuffer.rewind();
-
         for (int field = 0; field < nFields; field++) {
             /*
              * Read the Field Descriptor Array (starting at byte 32)
              */
             int initialPosition = (field+1) * DBASE_HEADER_LENGTH_BYTES;
-            if (DEBUG_FINE)
-                System.out.println("byteBuffer position:"+initialPosition);
             byteBuffer.position(initialPosition);
             // field name (11 bytes)--convert bytes to unicode chars
             char[] uniChars = new char[FIELD_NAME_LENGTH];
@@ -398,20 +375,18 @@ public class DBASEReader {
             int terminatorIndex = fieldName.indexOf('\u0000');
             if (terminatorIndex > 0 && terminatorIndex < fieldName.length())
                 fieldName = fieldName.substring(0, terminatorIndex);
-            fieldNames[field] = fieldName.trim();
+            fieldNames[field] = fieldName;
 
             // field type
             CharBuffer charBuffer = byteBuffer.asCharBuffer();
-            char fieldType = charBuffer.get();
-            fieldTypes[field] = fieldType;
+            charBuffer.get();
 
             // position buffer to 16th byte in record (field length)
             byteBuffer.position(initialPosition + 16);
-            int fieldLength = unsignedValue(byteBuffer.get());
-            fieldLengths[field] = fieldLength;
+            unsignedValue(byteBuffer.get());
 
-            byte decimalCount = byteBuffer.get();
-            decimalCounts[field] = decimalCount;
+            // decimal count
+            byteBuffer.get();
         }
 
         return(fieldNames);
@@ -427,9 +402,16 @@ public class DBASEReader {
         return (b & 0xFF);
     }
 
-    public Object[] readColumn(String columnName) throws Exception {
+    public Object[] readColumn(InputStream inputStream, String columnName) throws Exception {
         if (DEBUG_COARSE)
             System.out.println("readColumn() columnName="+columnName);
+
+        // process the file header
+        inputStream.mark(DBASE_HEADER_LENGTH_BYTES * 100);
+        DBASEHeaderInfo headerInfo = readHeader(inputStream);
+        if (headerInfo.nRecords <= 0)
+            return(null);
+        inputStream.reset();
 
         // Allocate byte buffer to read column names
         byte[] bytes = inputStream.readAllBytes();
@@ -444,11 +426,6 @@ public class DBASEReader {
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         /* make sure we are positioned at the start of the file */
         byteBuffer.rewind();
-
-        // process the file header
-        DBASEHeaderInfo headerInfo = readHeader();
-        if (headerInfo.nRecords <= 0)
-            return(null);
 
         if (debug())
             System.out.println("nRecords:"+headerInfo.nRecords);
@@ -572,9 +549,16 @@ public class DBASEReader {
         return(data);
     }
 
-    public Class<?> readColumnType(String columnName) throws Exception {
+    public Class<?> readColumnType(InputStream inputStream, String columnName) throws Exception {
         if (DEBUG_COARSE)
             System.out.println("readColumn() columnName="+columnName);
+
+        // process the file header
+        inputStream.mark(DBASE_HEADER_LENGTH_BYTES * 100);
+        DBASEHeaderInfo headerInfo = readHeader(inputStream);
+        if (headerInfo.nRecords <= 0)
+            return(null);
+        inputStream.reset();
 
         // Allocate byte buffer to read column names
         byte[] data = inputStream.readAllBytes();
@@ -589,11 +573,6 @@ public class DBASEReader {
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         /* make sure we are positioned at the start of the file */
         byteBuffer.rewind();
-
-        // process the file header
-        DBASEHeaderInfo headerInfo = readHeader();
-        if (headerInfo.nRecords <= 0)
-            return(null);
 
         if (debug())
             System.out.println("nRecords:"+headerInfo.nRecords);
@@ -773,7 +752,7 @@ public class DBASEReader {
         return byteBuffer;
     }
 
-    public DBASETableData read() throws IOException {
+    public DBASETableData read(InputStream inputStream) throws IOException {
         ByteBuffer byteBuffer = createByteBuffer(inputStream);
 
         // process the file header
@@ -901,15 +880,17 @@ public class DBASEReader {
         return(returnData);
     }
 
-    public DBASETableData readWithRecordNumberRowHeaders(ByteBuffer byteBuffer) throws Exception {
+    public DBASETableData readWithRecordNumberRowHeaders(ByteBuffer byteBuffer) {
         /* make sure we have proper byte order */
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         /* make sure we are positioned at the start of the file */
         byteBuffer.rewind();
+
         // process the file header
-        DBASEHeaderInfo headerInfo = readHeader();
+        DBASEHeaderInfo headerInfo = readHeader(byteBuffer);
         if (headerInfo.nRecords <= 0)
             return(null);
+
         int nFields = (headerInfo.headerSize / DBASE_HEADER_LENGTH_BYTES) - 1;
         if (nFields <= 0)
             return(null);
