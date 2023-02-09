@@ -43,7 +43,6 @@ An optional project file:
     List<DBField> fields = reader
         .readRecord(
             dbfStream, 
-            header, 
             selectedRecordIndex
         );
 
