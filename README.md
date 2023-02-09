@@ -34,15 +34,16 @@ An optional project file:
     // User clicks on a polyline on the map, returning the unique index into the geometry collection.
     Geometry geometry = getClickedData(); // Enter your own implementation here!
 
-    // User data should have been set during read.
+    // User data should have been set during read (as the record index from zero, including zero).
     UserData userData = new UserData(geometry.getUserData());
-
+    int recordIndex = userData.toInt();
+    
     // Now read the record from the .dbf file.
     InputStream dbfStream = getDbfInputStream(); // Enter your own implementation here!
     DBASEReader reader = new DBASEReader();
     List<DBField> fields = reader.readRecord(
         dbfStream, 
-        userData.toInt() // record index
+        recordIndex
     );
 
     dbfStream.close();
