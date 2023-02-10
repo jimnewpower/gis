@@ -1,3 +1,5 @@
+[![Java CI with Maven](https://github.com/jimnewpower/gis/actions/workflows/maven.yml/badge.svg)](https://github.com/jimnewpower/gis/actions/workflows/maven.yml)
+
 # gis
 A simple Java library for loading ESRI Shapefiles.
 
