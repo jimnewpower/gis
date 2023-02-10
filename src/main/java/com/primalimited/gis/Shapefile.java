@@ -20,6 +20,7 @@ package com.primalimited.gis;
          * https://www.osgeo.org/sites/osgeo.org/files/Page/osgeo-bsd-license.txt
          */
 
+import com.mapbox.geojson.Feature;
 import org.locationtech.jts.geom.*;
 
 import java.io.BufferedInputStream;
@@ -92,6 +93,38 @@ public class Shapefile {
         return sfile;
     }
 
+    public void streamFeatures(GeometryFactory geometryFactory, Consumer<Feature> consumer) throws Exception {
+        EndianDataInputStream file = getInputStream();
+        if(file==null) throw new IOException("Failed connection or no content for "+baseURL);
+        ShapefileHeader mainHeader = new ShapefileHeader(file);
+        if(mainHeader.getVersion() < VERSION){System.err.println("Sf-->Warning, Shapefile format ("+mainHeader.getVersion()+") older that supported ("+VERSION+"), attempting to read anyway");}
+        if(mainHeader.getVersion() > VERSION){System.err.println("Sf-->Warning, Shapefile format ("+mainHeader.getVersion()+") newer that supported ("+VERSION+"), attempting to read anyway");}
+
+        int type=mainHeader.getShapeType();
+        ShapeHandler handler = getShapeHandler(type);
+        if (handler==null)
+            throw new ShapeTypeNotSupportedException("Unsupported shape type:"+type);
+
+        // Read until end of file (EOFException will be thrown)
+        try {
+            while (true)
+                streamFeature(file, handler, geometryFactory, consumer);
+        } catch(EOFException e) {
+        }
+    }
+
+    private void streamFeature(EndianDataInputStream file, ShapeHandler handler, GeometryFactory geometryFactory, Consumer<Feature> consumer) throws IOException {
+        int recordNumber = file.readIntBE();
+        int contentLength = file.readIntBE();
+        try{
+            handler.streamFeature(file, geometryFactory, recordNumber-1, contentLength, consumer);
+        }catch(IllegalArgumentException r2d2){
+            consumer.accept(Feature.fromGeometry(null));
+        }catch(Exception c3p0){
+            consumer.accept(Feature.fromGeometry(null));
+        }
+    }
+
     public void stream(GeometryFactory geometryFactory, Consumer<Geometry> consumer) throws Exception {
         EndianDataInputStream file = getInputStream();
         if(file==null) throw new IOException("Failed connection or no content for "+baseURL);
@@ -116,9 +149,7 @@ public class Shapefile {
         int recordNumber = file.readIntBE();
         int contentLength = file.readIntBE();
         try{
-            Geometry body = handler.read(file,geometryFactory,contentLength);
-            body.setUserData(Integer.valueOf(recordNumber - 1));
-            consumer.accept(body);
+            handler.stream(file, geometryFactory, recordNumber-1, contentLength, consumer);
             // System.out.println("Done record: " + recordNumber);
         }catch(IllegalArgumentException r2d2){
             geomFactory = new GeometryFactory(null, -1);

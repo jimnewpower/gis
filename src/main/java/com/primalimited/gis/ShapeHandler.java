@@ -1,5 +1,6 @@
 package com.primalimited.gis;
 
+import com.mapbox.geojson.Feature;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 
@@ -15,6 +16,7 @@ interface ShapeHandler {
      *
      * @param file the input stream.
      * @param geometryFactory the geometry factory.
+     * @param recordIndex record index (0-based).
      * @param contentLength content length.
      * @param consumer geometry consumer.
      * @throws java.io.IOException
@@ -23,7 +25,16 @@ interface ShapeHandler {
     void stream(
             EndianDataInputStream file,
             GeometryFactory geometryFactory,
+            int recordIndex,
             int contentLength,
             Consumer<Geometry> consumer
+    ) throws java.io.IOException,InvalidShapefileException;
+
+    void streamFeature(
+            EndianDataInputStream file,
+            GeometryFactory geometryFactory,
+            int recordIndex,
+            int contentLength,
+            Consumer<Feature> consumer
     ) throws java.io.IOException,InvalidShapefileException;
 }

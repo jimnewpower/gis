@@ -1,5 +1,6 @@
 package com.primalimited.gis;
 
+import com.mapbox.geojson.Feature;
 import org.locationtech.jts.geom.*;
 
 import java.io.IOException;
@@ -24,7 +25,13 @@ class MultiLineHandler implements ShapeHandler {
     }
 
     @Override
-    public void stream(EndianDataInputStream file, GeometryFactory geometryFactory, int contentLength, Consumer<Geometry> consumer) throws IOException, InvalidShapefileException {
+    public void streamFeature(EndianDataInputStream file, GeometryFactory geometryFactory, int recordIndex, int contentLength, Consumer<Feature> consumer) throws IOException, InvalidShapefileException {
+        //TODO
+        throw new IllegalStateException("not implemented");
+    }
+
+    @Override
+    public void stream(EndianDataInputStream file, GeometryFactory geometryFactory, int recordIndex, int contentLength, Consumer<Geometry> consumer) throws IOException, InvalidShapefileException {
         double junk;
         int actualReadWords = 0; //actual number of words read (word = 16bits)
 
@@ -47,7 +54,6 @@ class MultiLineHandler implements ShapeHandler {
         junk =file.readDoubleLE();
         junk =file.readDoubleLE();
         actualReadWords += 4*4;
-
 
         int numParts = file.readIntLE();
         int numPoints = file.readIntLE();//total number of points
@@ -105,12 +111,10 @@ class MultiLineHandler implements ShapeHandler {
         }
 
         //verify that we have read everything we need
-        while (actualReadWords < contentLength)
-        {
+        while (actualReadWords < contentLength) {
             int junk2 = file.readShortBE();
             actualReadWords += 1;
         }
-
 
         int offset = 0;
         int start,finish,length;
@@ -130,12 +134,12 @@ class MultiLineHandler implements ShapeHandler {
                 offset++;
             }
             lines[part] = geometryFactory.createLineString(points);
-
         }
-        if (numParts ==1)
-            consumer.accept(lines[0]);
-        else
-            consumer.accept(geometryFactory.createMultiLineString(lines));
+
+        Geometry geometry = numParts == 1 ?
+                lines[0] : geometryFactory.createMultiLineString(lines);
+        geometry.setUserData(recordIndex);
+        consumer.accept(geometry);
     }
 
     @Override

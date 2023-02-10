@@ -1,5 +1,6 @@
 package com.primalimited.gis;
 
+import com.mapbox.geojson.Feature;
 import org.locationtech.jts.algorithm.Orientation;
 import org.locationtech.jts.algorithm.PointLocation;
 import org.locationtech.jts.geom.*;
@@ -48,7 +49,13 @@ class PolygonHandler implements ShapeHandler {
     }
 
     @Override
-    public void stream(EndianDataInputStream file, GeometryFactory geometryFactory, int contentLength, Consumer<Geometry> consumer) throws IOException, InvalidShapefileException {
+    public void streamFeature(EndianDataInputStream file, GeometryFactory geometryFactory, int recordIndex, int contentLength, Consumer<Feature> consumer) throws IOException, InvalidShapefileException {
+        //TODO
+        throw new IllegalStateException("not implemented");
+    }
+
+    @Override
+    public void stream(EndianDataInputStream file, GeometryFactory geometryFactory, int recordIndex, int contentLength, Consumer<Geometry> consumer) throws IOException, InvalidShapefileException {
         int actualReadWords = 0; //actual number of words read (word = 16bits)
 
         // file.setLittleEndianMode(true);

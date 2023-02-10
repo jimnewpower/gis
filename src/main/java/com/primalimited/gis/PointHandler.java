@@ -1,5 +1,6 @@
 package com.primalimited.gis;
 
+import com.mapbox.geojson.Feature;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -24,7 +25,13 @@ class PointHandler implements ShapeHandler {
     }
 
     @Override
-    public void stream(EndianDataInputStream file, GeometryFactory geometryFactory, int contentLength, Consumer<Geometry> consumer) throws IOException, InvalidShapefileException {
+    public void streamFeature(EndianDataInputStream file, GeometryFactory geometryFactory, int recordIndex, int contentLength, Consumer<Feature> consumer) throws IOException, InvalidShapefileException {
+        //TODO
+        throw new IllegalStateException("not implemented");
+    }
+
+    @Override
+    public void stream(EndianDataInputStream file, GeometryFactory geometryFactory, int recordIndex, int contentLength, Consumer<Geometry> consumer) throws IOException, InvalidShapefileException {
         //  file.setLittleEndianMode(true);
         int actualReadWords = 0; //actual number of words read (word = 16bits)
 
@@ -57,7 +64,9 @@ class PointHandler implements ShapeHandler {
             actualReadWords += 1;
         }
 
-        consumer.accept(geometryFactory.createPoint(new Coordinate(x,y,z)));
+        Geometry geometry = geometryFactory.createPoint(new Coordinate(x,y,z));
+        geometry.setUserData(recordIndex);
+        consumer.accept(geometry);
     }
 
     @Override
