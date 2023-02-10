@@ -49,7 +49,7 @@ class PolygonHandler implements ShapeHandler {
     }
 
     @Override
-    public void streamFeature(EndianDataInputStream file, GeometryFactory geometryFactory, int recordIndex, int contentLength, Consumer<Feature> consumer) throws IOException, InvalidShapefileException {
+    public void streamFeature(EndianDataInputStream file, int recordIndex, int contentLength, Consumer<Feature> consumer) throws IOException, InvalidShapefileException {
         //TODO
         throw new IllegalStateException("not implemented");
     }

@@ -93,7 +93,7 @@ public class Shapefile {
         return sfile;
     }
 
-    public void streamFeatures(GeometryFactory geometryFactory, Consumer<Feature> consumer) throws Exception {
+    public void streamFeatures(Consumer<Feature> consumer) throws Exception {
         EndianDataInputStream file = getInputStream();
         if(file==null) throw new IOException("Failed connection or no content for "+baseURL);
         ShapefileHeader mainHeader = new ShapefileHeader(file);
@@ -108,16 +108,16 @@ public class Shapefile {
         // Read until end of file (EOFException will be thrown)
         try {
             while (true)
-                streamFeature(file, handler, geometryFactory, consumer);
+                streamFeature(file, handler, consumer);
         } catch(EOFException e) {
         }
     }
 
-    private void streamFeature(EndianDataInputStream file, ShapeHandler handler, GeometryFactory geometryFactory, Consumer<Feature> consumer) throws IOException {
+    private void streamFeature(EndianDataInputStream file, ShapeHandler handler, Consumer<Feature> consumer) throws IOException {
         int recordNumber = file.readIntBE();
         int contentLength = file.readIntBE();
         try{
-            handler.streamFeature(file, geometryFactory, recordNumber-1, contentLength, consumer);
+            handler.streamFeature(file, recordNumber-1, contentLength, consumer);
         }catch(IllegalArgumentException r2d2){
             consumer.accept(Feature.fromGeometry(null));
         }catch(Exception c3p0){

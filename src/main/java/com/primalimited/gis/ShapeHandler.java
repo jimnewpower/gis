@@ -32,7 +32,6 @@ interface ShapeHandler {
 
     void streamFeature(
             EndianDataInputStream file,
-            GeometryFactory geometryFactory,
             int recordIndex,
             int contentLength,
             Consumer<Feature> consumer
