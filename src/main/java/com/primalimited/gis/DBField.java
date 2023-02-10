@@ -1,6 +1,5 @@
 package com.primalimited.gis;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
 
 import java.util.Objects;
